@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexo Marketplace - Funcional</title>
+    <title>Nexo Marketplace - Full Interactiva</title>
     
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -17,54 +17,55 @@
             --color-text-secondary: #64748b;
             --color-border-tertiary: #e2e8f0;
         }
-        body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: #f1f5f9; color: var(--color-text-primary); }
-        button { cursor: pointer; border: none; transition: all 0.2s; }
-        .sidebar-btn { width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 10px; background: transparent; font-size: 14px; color: var(--color-text-secondary); text-align: left; }
-        .sidebar-btn.active { background: #e2e8f0; color: var(--color-text-primary); font-weight: 600; }
-        .product-card { background: white; border: 1px solid var(--color-border-tertiary); border-radius: 16px; overflow: hidden; }
-        .badge { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; background: #f1f5f9; }
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--color-background-secondary); overflow: hidden; }
+        * { box-sizing: border-box; }
+        button { cursor: pointer; transition: all 0.2s; }
+        .sidebar-btn { width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px; border: none; border-radius: 10px; background: transparent; font-size: 14px; font-weight: 500; color: var(--color-text-secondary); text-align: left; }
+        .sidebar-btn:hover { background: #f1f5f9; }
+        .sidebar-btn.active { background: #f1f5f9; color: var(--color-text-primary); }
+        .card { background: white; border: 0.5px solid var(--color-border-tertiary); border-radius: 20px; overflow: hidden; }
+        .card:hover { transform: translateY(-4px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState } = React;
+        const { useState, useEffect } = React;
 
+        // --- DATOS ORIGINALES ---
         const INITIAL_PRODUCTS = [
-            { id: 1, name: "iPhone 15 Pro Max", price: 1299, image: "📱", category: "Electrónica", stock: 15, description: "Titanio premium y chip A17 Pro." },
-            { id: 2, name: "MacBook Air M3", price: 1099, image: "💻", category: "Computadoras", stock: 8, description: "Potencia y elegancia portátil." },
-            { id: 3, name: "Sony WH-1000XM5", price: 279, image: "🎧", category: "Audio", stock: 42, description: "Cancelación de ruido líder." },
-            { id: 4, name: "Samsung OLED 65\"", price: 1799, image: "📺", category: "Electrónica", stock: 5, description: "Colores perfectos." }
+            { id: 1, name: "iPhone 15 Pro Max", price: 1299, originalPrice: 1499, category: "Electrónica", rating: 4.8, reviews: 2341, image: "📱", seller: "TechStore Pro", stock: 15, badge: "Top Ventas", description: "El iPhone más avanzado con chip A17 Pro, cámara de 48MP y titanio premium." },
+            { id: 2, name: "MacBook Air M3", price: 1099, originalPrice: 1299, category: "Computadoras", rating: 4.9, reviews: 876, image: "💻", seller: "AppleWorld", stock: 8, badge: "Nuevo", description: "Potencia increíble con batería de 18 horas. El laptop perfecto para todo." },
+            { id: 3, name: "Sony WH-1000XM5", price: 279, originalPrice: 379, category: "Audio", rating: 4.7, reviews: 5432, image: "🎧", seller: "AudioTech", stock: 42, badge: "Oferta", description: "Cancelación de ruido líder en la industria." },
+            { id: 4, name: "Samsung OLED 65\"", price: 1799, originalPrice: 2199, category: "Electrónica", rating: 4.6, reviews: 432, image: "📺", seller: "SamsungOfficial", stock: 5, badge: "Premium", description: "Colores negros perfectos." },
+            { id: 6, name: "PS5 Slim Bundle", price: 599, originalPrice: 699, category: "Gaming", rating: 4.9, reviews: 4321, image: "🎮", seller: "GamersHub", stock: 3, badge: "Agotándose", description: "Consola PS5 más dos juegos de regalo." }
+        ];
+
+        const INITIAL_MESSAGES = [
+            { id: 1, sender: "TechStore Pro", text: "¿En qué puedo ayudarte?", time: "14:20", avatar: "👨‍💻" },
+            { id: 2, sender: "AppleWorld", text: "El envío sale hoy mismo", time: "Ayer", avatar: "🍏" }
         ];
 
         function App() {
             const [view, setView] = useState('home');
             const [products, setProducts] = useState(INITIAL_PRODUCTS);
             const [cart, setCart] = useState([]);
-            const [orders, setOrders] = useState([
-                { id: "#ORD-8821", product: "iPhone 15 Pro Max", date: "10 May 2026", status: "Entregado", amount: 1299 }
-            ]);
+            const [orders, setOrders] = useState([{ id: "#ORD-8821", product: "iPhone 15 Pro Max", date: "10 May 2026", status: "Entregado", amount: 1299 }]);
+            const [favorites, setFavorites] = useState([]);
+            const [search, setSearch] = useState("");
             const [selectedProduct, setSelectedProduct] = useState(null);
 
-            const addToCart = (product) => {
-                if (product.stock <= 0) return;
-                setCart(prev => {
-                    const exists = prev.find(i => i.id === product.id);
-                    if (exists) return prev.map(i => i.id === product.id ? {...i, qty: i.qty + 1} : i);
-                    return [...prev, {...product, qty: 1}];
-                });
-            };
-
+            // Lógica de Compra
             const handleCheckout = () => {
                 if (cart.length === 0) return;
+                const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
                 const newOrder = {
                     id: `#ORD-${Math.floor(1000 + Math.random() * 9000)}`,
                     product: cart.map(i => `${i.name} (x${i.qty})`).join(", "),
                     date: new Date().toLocaleDateString(),
                     status: "En preparación",
-                    amount: cart.reduce((acc, item) => acc + (item.price * item.qty), 0)
+                    amount: total
                 };
                 setOrders([newOrder, ...orders]);
                 setProducts(products.map(p => {
@@ -73,86 +74,146 @@
                 }));
                 setCart([]);
                 setView('orders');
-                alert("¡Pedido realizado con éxito!");
+                alert("¡Compra exitosa!");
             };
+
+            const addToCart = (p) => {
+                if (p.stock <= 0) return;
+                setCart(prev => {
+                    const exists = prev.find(i => i.id === p.id);
+                    if (exists) return prev.map(i => i.id === p.id ? {...i, qty: i.qty + 1} : i);
+                    return [...prev, {...p, qty: 1}];
+                });
+            };
+
+            const filteredProducts = products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
 
             return (
                 <div style={{ display: 'flex', height: '100vh' }}>
                     {/* SIDEBAR */}
-                    <aside style={{ width: 240, background: 'white', borderRight: '1px solid var(--color-border-tertiary)', padding: 20 }}>
-                        <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 30 }}>◆ Nexo</h2>
-                        <nav style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                    <aside style={{ width: 260, background: 'white', borderRight: '0.5px solid var(--color-border-tertiary)', padding: 24, display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 40, display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <div style={{ width: 30, height: 30, background: '#111', borderRadius: 8 }} /> Nexo
+                        </div>
+                        <nav style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                             <button className={`sidebar-btn ${view === 'home' ? 'active' : ''}`} onClick={() => setView('home')}>🏪 Inicio</button>
                             <button className={`sidebar-btn ${view === 'cart' ? 'active' : ''}`} onClick={() => setView('cart')}>🛒 Carrito ({cart.length})</button>
-                            <button className={`sidebar-btn ${view === 'orders' ? 'active' : ''}`} onClick={() => setView('orders')}>📋 Pedidos</button>
+                            <button className={`sidebar-btn ${view === 'orders' ? 'active' : ''}`} onClick={() => setView('orders')}>📋 Pedidos ({orders.length})</button>
+                            <button className={`sidebar-btn ${view === 'messages' ? 'active' : ''}`} onClick={() => setView('messages')}>💬 Mensajes</button>
                         </nav>
                     </aside>
 
-                    {/* CONTENIDO PRINCIPAL */}
-                    <main style={{ flex: 1, overflowY: 'auto', padding: 30 }}>
-                        {view === 'home' && (
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 20 }}>
-                                {products.map(p => (
-                                    <div key={p.id} className="product-card" onClick={() => setSelectedProduct(p)}>
-                                        <div style={{ height: 150, background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 50 }}>{p.image}</div>
-                                        <div style={{ padding: 15 }}>
-                                            <h4 style={{ margin: '0 0 10px' }}>{p.name}</h4>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <span style={{ fontWeight: 700 }}>${p.price}</span>
-                                                <button onClick={(e) => { e.stopPropagation(); addToCart(p); }} style={{ background: '#111', color: 'white', padding: '5px 10px', borderRadius: 6 }}>+</button>
+                    <main style={{ flex: 1, overflowY: 'auto' }}>
+                        {/* NAVBAR */}
+                        <header style={{ position: 'sticky', top: 0, background: 'white', padding: '16px 32px', display: 'flex', justifyContent: 'space-between', borderBottom: '0.5px solid #eee', zIndex: 10 }}>
+                            <input 
+                                type="text" 
+                                placeholder="Buscar productos..." 
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                style={{ width: 350, padding: '10px 16px', borderRadius: 10, border: '1px solid #eee', background: '#f9f9f9' }}
+                            />
+                            <div style={{ display: 'flex', gap: 10 }}>
+                                <button style={{ background: '#f1f1f1', border: 'none', padding: '10px', borderRadius: '50%' }}>🔔</button>
+                                <div style={{ width: 35, height: 35, background: '#ddd', borderRadius: '50%' }} />
+                            </div>
+                        </header>
+
+                        <div style={{ padding: 32 }}>
+                            {/* HOME */}
+                            {view === 'home' && (
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 24 }}>
+                                    {filteredProducts.map(p => (
+                                        <div key={p.id} className="card" onClick={() => setSelectedProduct(p)}>
+                                            <div style={{ height: 180, background: '#f8f8f8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 50, position: 'relative' }}>
+                                                {p.image}
+                                                <button 
+                                                    onClick={(e) => { e.stopPropagation(); setFavorites(f => f.includes(p.id) ? f.filter(id => id !== p.id) : [...f, p.id]); }}
+                                                    style={{ position: 'absolute', top: 12, right: 12, border: 'none', background: 'white', borderRadius: '50%', width: 30, height: 30 }}
+                                                >
+                                                    {favorites.includes(p.id) ? "❤️" : "🤍"}
+                                                </button>
+                                            </div>
+                                            <div style={{ padding: 16 }}>
+                                                <small style={{ color: p.stock < 5 ? 'red' : '#888' }}>{p.badge} ({p.stock} disp.)</small>
+                                                <h4 style={{ margin: '8px 0' }}>{p.name}</h4>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                    <span style={{ fontWeight: 800 }}>${p.price}</span>
+                                                    <button onClick={(e) => { e.stopPropagation(); addToCart(p); }} style={{ background: '#111', color: 'white', border: 'none', borderRadius: 8, padding: '6px 12px' }}>+</button>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                                    ))}
+                                </div>
+                            )}
 
-                        {view === 'cart' && (
-                            <div style={{ maxWidth: 600, background: 'white', padding: 25, borderRadius: 16 }}>
-                                <h3>Tu Carrito</h3>
-                                {cart.length === 0 ? <p>El carrito está vacío.</p> : (
-                                    <>
-                                        {cart.map(item => (
-                                            <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #eee' }}>
-                                                <span>{item.name} (x{item.qty})</span>
-                                                <strong>${item.price * item.qty}</strong>
+                            {/* CARRITO */}
+                            {view === 'cart' && (
+                                <div style={{ maxWidth: 600 }}>
+                                    <h2>Carrito de Compras</h2>
+                                    {cart.length === 0 ? <p>Tu carrito está vacío</p> : (
+                                        <>
+                                            {cart.map(item => (
+                                                <div key={item.id} style={{ display: 'flex', gap: 15, background: 'white', padding: 15, borderRadius: 15, marginBottom: 10, border: '1px solid #eee', alignItems: 'center' }}>
+                                                    <div style={{ fontSize: 30 }}>{item.image}</div>
+                                                    <div style={{ flex: 1 }}><strong>{item.name}</strong><br/>${item.price} x {item.qty}</div>
+                                                    <button onClick={() => setCart(cart.filter(i => i.id !== item.id))} style={{ color: 'red', border: 'none', background: 'none' }}>Quitar</button>
+                                                </div>
+                                            ))}
+                                            <div style={{ marginTop: 20, textAlign: 'right' }}>
+                                                <h3>Total: ${cart.reduce((s, i) => s + (i.price * i.qty), 0)}</h3>
+                                                <button onClick={handleCheckout} style={{ background: '#111', color: 'white', padding: '12px 30px', borderRadius: 12, border: 'none', fontWeight: 600 }}>Pagar Ahora</button>
                                             </div>
-                                        ))}
-                                        <div style={{ marginTop: 20, textAlign: 'right' }}>
-                                            <h4>Total: ${cart.reduce((acc, item) => acc + (item.price * item.qty), 0)}</h4>
-                                            <button onClick={handleCheckout} style={{ background: '#111', color: 'white', padding: '10px 20px', borderRadius: 8 }}>Finalizar Compra</button>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        )}
+                                        </>
+                                    )}
+                                </div>
+                            )}
 
-                        {view === 'orders' && (
-                            <div style={{ maxWidth: 600 }}>
-                                <h3>Mis Pedidos</h3>
-                                {orders.map(o => (
-                                    <div key={o.id} style={{ background: 'white', padding: 15, borderRadius: 12, marginBottom: 10, border: '1px solid #eee' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                            <strong>{o.id}</strong>
-                                            <span style={{ color: 'blue' }}>{o.status}</span>
+                            {/* PEDIDOS */}
+                            {view === 'orders' && (
+                                <div style={{ maxWidth: 600 }}>
+                                    <h2>Mis Pedidos</h2>
+                                    {orders.map(o => (
+                                        <div key={o.id} style={{ background: 'white', padding: 20, borderRadius: 15, border: '1px solid #eee', marginBottom: 12 }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between' }}><strong>{o.id}</strong><span style={{ color: 'green' }}>{o.status}</span></div>
+                                            <p style={{ margin: '10px 0', fontSize: 14 }}>{o.product}</p>
+                                            <div style={{ textAlign: 'right', fontWeight: 700 }}>Total: ${o.amount}</div>
                                         </div>
-                                        <p style={{ fontSize: 13, color: '#666' }}>{o.product}</p>
-                                        <div style={{ textAlign: 'right', fontWeight: 700 }}>${o.amount}</div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* MENSAJES */}
+                            {view === 'messages' && (
+                                <div style={{ maxWidth: 600 }}>
+                                    <h2>Mensajes</h2>
+                                    {INITIAL_MESSAGES.map(m => (
+                                        <div key={m.id} style={{ display: 'flex', gap: 15, background: 'white', padding: 15, borderRadius: 15, marginBottom: 10, border: '1px solid #eee' }}>
+                                            <div style={{ fontSize: 25 }}>{m.avatar}</div>
+                                            <div><strong>{m.sender}</strong><p style={{ margin: 0, fontSize: 14 }}>{m.text}</p></div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </main>
 
-                    {/* MODAL DETALLE */}
+                    {/* MODAL DETALLES */}
                     {selectedProduct && (
-                        <div className="modal-overlay" onClick={() => setSelectedProduct(null)}>
-                            <div style={{ background: 'white', padding: 30, borderRadius: 20, maxWidth: 400, textAlign: 'center' }} onClick={e => e.stopPropagation()}>
-                                <div style={{ fontSize: 80 }}>{selectedProduct.image}</div>
+                        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setSelectedProduct(null)}>
+                            <div style={{ background: 'white', padding: 32, borderRadius: 24, maxWidth: 500, width: '90%' }} onClick={e => e.stopPropagation()}>
+                                <div style={{ fontSize: 80, textAlign: 'center' }}>{selectedProduct.image}</div>
                                 <h2>{selectedProduct.name}</h2>
-                                <p>{selectedProduct.description}</p>
-                                <p>Stock disponible: {selectedProduct.stock}</p>
-                                <button onClick={() => { addToCart(selectedProduct); setSelectedProduct(null); }} style={{ background: '#111', color: 'white', padding: '10px 20px', borderRadius: 8, width: '100%' }}>Añadir al carrito</button>
+                                <p style={{ color: '#666' }}>{selectedProduct.description}</p>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 24 }}>
+                                    <span style={{ fontSize: 24, fontWeight: 800 }}>${selectedProduct.price}</span>
+                                    <button 
+                                        onClick={() => { addToCart(selectedProduct); setSelectedProduct(null); }}
+                                        style={{ background: '#111', color: 'white', padding: '12px 24px', borderRadius: 12, border: 'none' }}
+                                    >
+                                        Añadir al carrito
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     )}
