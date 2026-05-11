@@ -3,28 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexo Marketplace - Full Interactiva</title>
-    
+    <title>Nexo Premium | Marketplace Completo</title>
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
     <style>
         :root {
-            --color-background-primary: #ffffff;
-            --color-background-secondary: #f8fafc;
-            --color-text-primary: #0f172a;
-            --color-text-secondary: #64748b;
-            --color-border-tertiary: #e2e8f0;
+            --primary: #111827;
+            --accent: #3b82f6;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
         }
-        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--color-background-secondary); overflow: hidden; }
-        * { box-sizing: border-box; }
-        button { cursor: pointer; transition: all 0.2s; }
-        .sidebar-btn { width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px; border: none; border-radius: 10px; background: transparent; font-size: 14px; font-weight: 500; color: var(--color-text-secondary); text-align: left; }
-        .sidebar-btn:hover { background: #f1f5f9; }
-        .sidebar-btn.active { background: #f1f5f9; color: var(--color-text-primary); }
-        .card { background: white; border: 0.5px solid var(--color-border-tertiary); border-radius: 20px; overflow: hidden; }
-        .card:hover { transform: translateY(-4px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        body { margin: 0; font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text-main); }
+        * { box-sizing: border-box; transition: all 0.2s ease; }
+        
+        /* Layout */
+        .app-container { display: flex; height: 100vh; overflow: hidden; }
+        .sidebar { width: 260px; background: white; border-right: 1px solid var(--border); padding: 24px; display: flex; flexDirection: column; }
+        .main-content { flex: 1; overflow-y: auto; display: flex; flexDirection: column; }
+        
+        /* UI Elements */
+        .nav-item { 
+            display: flex; align-items: center; gap: 12px; padding: 12px 16px; 
+            border-radius: 12px; cursor: pointer; border: none; background: none;
+            width: 100%; text-align: left; font-size: 14px; font-weight: 500; color: var(--text-muted);
+        }
+        .nav-item:hover { background: #f1f5f9; color: var(--primary); }
+        .nav-item.active { background: var(--primary); color: white; }
+
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 24px; padding: 24px; }
+        .product-card { 
+            background: white; border-radius: 20px; border: 1px solid var(--border); 
+            overflow: hidden; position: relative; cursor: pointer;
+        }
+        .product-card:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+        
+        .img-container { height: 200px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; fontSize: 64px; }
+        .badge { position: absolute; top: 12px; left: 12px; background: white; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+
+        .price-tag { font-size: 20px; font-weight: 800; color: var(--primary); }
+        .btn-primary { 
+            background: var(--primary); color: white; padding: 12px; border-radius: 12px; 
+            border: none; font-weight: 600; width: 100%; cursor: pointer;
+        }
+        .btn-primary:hover { opacity: 0.9; transform: scale(1.02); }
+
+        /* Notifications & Messages */
+        .dot { height: 8px; width: 8px; background: #ef4444; border-radius: 50%; display: inline-block; }
     </style>
 </head>
 <body>
@@ -33,186 +61,236 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // --- DATOS ORIGINALES ---
-        const INITIAL_PRODUCTS = [
-            { id: 1, name: "iPhone 15 Pro Max", price: 1299, originalPrice: 1499, category: "Electrónica", rating: 4.8, reviews: 2341, image: "📱", seller: "TechStore Pro", stock: 15, badge: "Top Ventas", description: "El iPhone más avanzado con chip A17 Pro, cámara de 48MP y titanio premium." },
-            { id: 2, name: "MacBook Air M3", price: 1099, originalPrice: 1299, category: "Computadoras", rating: 4.9, reviews: 876, image: "💻", seller: "AppleWorld", stock: 8, badge: "Nuevo", description: "Potencia increíble con batería de 18 horas. El laptop perfecto para todo." },
-            { id: 3, name: "Sony WH-1000XM5", price: 279, originalPrice: 379, category: "Audio", rating: 4.7, reviews: 5432, image: "🎧", seller: "AudioTech", stock: 42, badge: "Oferta", description: "Cancelación de ruido líder en la industria." },
-            { id: 4, name: "Samsung OLED 65\"", price: 1799, originalPrice: 2199, category: "Electrónica", rating: 4.6, reviews: 432, image: "📺", seller: "SamsungOfficial", stock: 5, badge: "Premium", description: "Colores negros perfectos." },
-            { id: 6, name: "PS5 Slim Bundle", price: 599, originalPrice: 699, category: "Gaming", rating: 4.9, reviews: 4321, image: "🎮", seller: "GamersHub", stock: 3, badge: "Agotándose", description: "Consola PS5 más dos juegos de regalo." }
-        ];
-
-        const INITIAL_MESSAGES = [
-            { id: 1, sender: "TechStore Pro", text: "¿En qué puedo ayudarte?", time: "14:20", avatar: "👨‍💻" },
-            { id: 2, sender: "AppleWorld", text: "El envío sale hoy mismo", time: "Ayer", avatar: "🍏" }
+        // --- DATA ---
+        const PRODUCTS_DATA = [
+            { id: 1, name: "iPhone 15 Pro Max", price: 1299, category: "Mobile", image: "📱", stock: 10, badge: "Más Vendido", desc: "El titán de Apple con chip A17 Pro." },
+            { id: 2, name: "MacBook Air M3", price: 1599, category: "Laptops", image: "💻", stock: 5, badge: "Nuevo", desc: "Potencia sin ventiladores, silencio absoluto." },
+            { id: 3, name: "Sony WH-1000XM5", price: 399, category: "Audio", image: "🎧", stock: 15, badge: "Oferta", desc: "Cancelación de ruido líder en el mercado." },
+            { id: 4, name: "Apple Watch Ultra", price: 799, category: "Wearables", image: "⌚", stock: 8, badge: "Premium", desc: "El reloj más resistente jamás creado." },
+            { id: 5, name: "PlayStation 5", price: 499, category: "Gaming", image: "🎮", stock: 3, badge: "Limited", desc: "Juegos en 4K y 120fps constantes." },
+            { id: 6, name: "iPad Pro M2", price: 999, category: "Tablets", image: "平板", stock: 12, badge: "Pro", desc: "Tu próximo ordenador no es un ordenador." }
         ];
 
         function App() {
+            // Persistencia: Cargamos datos de LocalStorage si existen
             const [view, setView] = useState('home');
-            const [products, setProducts] = useState(INITIAL_PRODUCTS);
-            const [cart, setCart] = useState([]);
-            const [orders, setOrders] = useState([{ id: "#ORD-8821", product: "iPhone 15 Pro Max", date: "10 May 2026", status: "Entregado", amount: 1299 }]);
-            const [favorites, setFavorites] = useState([]);
-            const [search, setSearch] = useState("");
+            const [cart, setCart] = useState(() => JSON.parse(localStorage.getItem('cart')) || []);
+            const [orders, setOrders] = useState(() => JSON.parse(localStorage.getItem('orders')) || []);
+            const [favorites, setFavorites] = useState(() => JSON.parse(localStorage.getItem('favs')) || []);
+            const [search, setSearch] = useState('');
+            const [category, setCategory] = useState('All');
             const [selectedProduct, setSelectedProduct] = useState(null);
 
-            // Lógica de Compra
-            const handleCheckout = () => {
-                if (cart.length === 0) return;
-                const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
-                const newOrder = {
-                    id: `#ORD-${Math.floor(1000 + Math.random() * 9000)}`,
-                    product: cart.map(i => `${i.name} (x${i.qty})`).join(", "),
-                    date: new Date().toLocaleDateString(),
-                    status: "En preparación",
-                    amount: total
-                };
-                setOrders([newOrder, ...orders]);
-                setProducts(products.map(p => {
-                    const itemInCart = cart.find(c => c.id === p.id);
-                    return itemInCart ? {...p, stock: p.stock - itemInCart.qty} : p;
-                }));
-                setCart([]);
-                setView('orders');
-                alert("¡Compra exitosa!");
-            };
+            // Guardar en LocalStorage cada vez que cambien los datos
+            useEffect(() => { localStorage.setItem('cart', JSON.stringify(cart)) }, [cart]);
+            useEffect(() => { localStorage.setItem('orders', JSON.stringify(orders)) }, [orders]);
+            useEffect(() => { localStorage.setItem('favs', JSON.stringify(favorites)) }, [favorites]);
 
             const addToCart = (p) => {
-                if (p.stock <= 0) return;
-                setCart(prev => {
-                    const exists = prev.find(i => i.id === p.id);
-                    if (exists) return prev.map(i => i.id === p.id ? {...i, qty: i.qty + 1} : i);
-                    return [...prev, {...p, qty: 1}];
-                });
+                const existing = cart.find(item => item.id === p.id);
+                if (existing) {
+                    setCart(cart.map(item => item.id === p.id ? {...item, qty: item.qty + 1} : item));
+                } else {
+                    setCart([...cart, {...p, qty: 1}]);
+                }
             };
 
-            const filteredProducts = products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
+            const toggleFav = (id) => {
+                setFavorites(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+            };
+
+            const checkout = () => {
+                const total = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
+                const newOrder = {
+                    id: `#NX-${Math.floor(Math.random() * 90000) + 10000}`,
+                    date: new Date().toLocaleString(),
+                    items: cart.map(i => `${i.name} (x${i.qty})`).join(", "),
+                    total: total,
+                    status: "Confirmado"
+                };
+                setOrders([newOrder, ...orders]);
+                setCart([]);
+                setView('orders');
+                alert("🚀 ¡Pedido procesado! Gracias por elegir Nexo.");
+            };
+
+            const filteredProducts = PRODUCTS_DATA.filter(p => 
+                (category === 'All' || p.category === category) &&
+                (p.name.toLowerCase().includes(search.toLowerCase()))
+            );
 
             return (
-                <div style={{ display: 'flex', height: '100vh' }}>
-                    {/* SIDEBAR */}
-                    <aside style={{ width: 260, background: 'white', borderRight: '0.5px solid var(--color-border-tertiary)', padding: 24, display: 'flex', flexDirection: 'column' }}>
-                        <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 40, display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <div style={{ width: 30, height: 30, background: '#111', borderRadius: 8 }} /> Nexo
+                <div className="app-container">
+                    {/* SIDEBAR COMPLETO */}
+                    <aside className="sidebar">
+                        <div style={{fontSize: 24, fontWeight: 900, marginBottom: 40, letterSpacing: '-1px'}}>NEXO <span style={{color: 'var(--accent)'}}>•</span></div>
+                        
+                        <div style={{display: 'flex', flexDirection: 'column', gap: 4, flex: 1}}>
+                            <button className={`nav-item ${view === 'home' ? 'active' : ''}`} onClick={() => setView('home')}>🏠 Explorar</button>
+                            <button className={`nav-item ${view === 'favs' ? 'active' : ''}`} onClick={() => setView('favs')}>❤️ Favoritos ({favorites.length})</button>
+                            <button className={`nav-item ${view === 'cart' ? 'active' : ''}`} onClick={() => setView('cart')}>🛒 Carrito ({cart.reduce((a,b)=>a+b.qty, 0)})</button>
+                            <button className={`nav-item ${view === 'orders' ? 'active' : ''}`} onClick={() => setView('orders')}>📦 Mis Pedidos</button>
+                            <button className={`nav-item ${view === 'chat' ? 'active' : ''}`} onClick={() => setView('chat')}>💬 Mensajes <span className="dot"></span></button>
                         </div>
-                        <nav style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            <button className={`sidebar-btn ${view === 'home' ? 'active' : ''}`} onClick={() => setView('home')}>🏪 Inicio</button>
-                            <button className={`sidebar-btn ${view === 'cart' ? 'active' : ''}`} onClick={() => setView('cart')}>🛒 Carrito ({cart.length})</button>
-                            <button className={`sidebar-btn ${view === 'orders' ? 'active' : ''}`} onClick={() => setView('orders')}>📋 Pedidos ({orders.length})</button>
-                            <button className={`sidebar-btn ${view === 'messages' ? 'active' : ''}`} onClick={() => setView('messages')}>💬 Mensajes</button>
-                        </nav>
+
+                        <div style={{marginTop: 'auto', padding: 16, background: '#f1f5f9', borderRadius: 16}}>
+                            <div style={{fontSize: 12, fontWeight: 700}}>Nexo Premium</div>
+                            <div style={{fontSize: 11, color: '#64748b'}}>Soporte 24/7 activo</div>
+                        </div>
                     </aside>
 
-                    <main style={{ flex: 1, overflowY: 'auto' }}>
-                        {/* NAVBAR */}
-                        <header style={{ position: 'sticky', top: 0, background: 'white', padding: '16px 32px', display: 'flex', justifyContent: 'space-between', borderBottom: '0.5px solid #eee', zIndex: 10 }}>
+                    <main className="main-content">
+                        {/* NAVBAR SUPERIOR */}
+                        <header style={{padding: '20px 40px', background: 'white', display: 'flex', gap: 20, alignItems: 'center', borderBottom: '1px solid var(--border)', sticky: 'top'}}>
                             <input 
-                                type="text" 
-                                placeholder="Buscar productos..." 
-                                value={search}
+                                type="text" placeholder="Busca tu próximo equipo..." 
+                                style={{flex: 1, padding: '12px 20px', borderRadius: 14, border: '1px solid var(--border)', background: '#f8fafc'}}
                                 onChange={(e) => setSearch(e.target.value)}
-                                style={{ width: 350, padding: '10px 16px', borderRadius: 10, border: '1px solid #eee', background: '#f9f9f9' }}
                             />
-                            <div style={{ display: 'flex', gap: 10 }}>
-                                <button style={{ background: '#f1f1f1', border: 'none', padding: '10px', borderRadius: '50%' }}>🔔</button>
-                                <div style={{ width: 35, height: 35, background: '#ddd', borderRadius: '50%' }} />
-                            </div>
+                            <select 
+                                onChange={(e) => setCategory(e.target.value)}
+                                style={{padding: '12px', borderRadius: 14, border: '1px solid var(--border)', background: 'white'}}
+                            >
+                                <option value="All">Categorías</option>
+                                <option value="Mobile">Celulares</option>
+                                <option value="Laptops">Notebooks</option>
+                                <option value="Audio">Audio</option>
+                                <option value="Gaming">Consolas</option>
+                            </select>
+                            <div style={{width: 40, height: 40, borderRadius: 12, background: '#111', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700}}>JD</div>
                         </header>
 
-                        <div style={{ padding: 32 }}>
-                            {/* HOME */}
+                        <div style={{padding: 40}}>
+                            {/* VISTA: TIENDA / EXPLORAR */}
                             {view === 'home' && (
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 24 }}>
-                                    {filteredProducts.map(p => (
-                                        <div key={p.id} className="card" onClick={() => setSelectedProduct(p)}>
-                                            <div style={{ height: 180, background: '#f8f8f8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 50, position: 'relative' }}>
-                                                {p.image}
-                                                <button 
-                                                    onClick={(e) => { e.stopPropagation(); setFavorites(f => f.includes(p.id) ? f.filter(id => id !== p.id) : [...f, p.id]); }}
-                                                    style={{ position: 'absolute', top: 12, right: 12, border: 'none', background: 'white', borderRadius: '50%', width: 30, height: 30 }}
-                                                >
-                                                    {favorites.includes(p.id) ? "❤️" : "🤍"}
-                                                </button>
-                                            </div>
-                                            <div style={{ padding: 16 }}>
-                                                <small style={{ color: p.stock < 5 ? 'red' : '#888' }}>{p.badge} ({p.stock} disp.)</small>
-                                                <h4 style={{ margin: '8px 0' }}>{p.name}</h4>
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                    <span style={{ fontWeight: 800 }}>${p.price}</span>
-                                                    <button onClick={(e) => { e.stopPropagation(); addToCart(p); }} style={{ background: '#111', color: 'white', border: 'none', borderRadius: 8, padding: '6px 12px' }}>+</button>
+                                <>
+                                    <h1 style={{margin: '0 0 8px', fontSize: 32}}>Para vos</h1>
+                                    <p style={{color: 'var(--text-muted)', marginBottom: 32}}>Basado en tus últimas búsquedas</p>
+                                    <div className="product-grid">
+                                        {filteredProducts.map(p => (
+                                            <div key={p.id} className="product-card" onClick={() => setSelectedProduct(p)}>
+                                                <div className="img-container">
+                                                    {p.image}
+                                                    <div className="badge">{p.badge}</div>
+                                                </div>
+                                                <div style={{padding: 20}}>
+                                                    <div style={{fontSize: 12, color: 'var(--accent)', fontWeight: 700}}>{p.category}</div>
+                                                    <h3 style={{margin: '4px 0 12px', fontSize: 18}}>{p.name}</h3>
+                                                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                                                        <span className="price-tag">${p.price}</span>
+                                                        <button 
+                                                            onClick={(e) => {e.stopPropagation(); addToCart(p)}}
+                                                            style={{background: '#f1f5f9', border: 'none', padding: 8, borderRadius: 10}}
+                                                        >➕</button>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    ))}
-                                </div>
+                                        ))}
+                                    </div>
+                                </>
                             )}
 
-                            {/* CARRITO */}
-                            {view === 'cart' && (
-                                <div style={{ maxWidth: 600 }}>
-                                    <h2>Carrito de Compras</h2>
-                                    {cart.length === 0 ? <p>Tu carrito está vacío</p> : (
-                                        <>
-                                            {cart.map(item => (
-                                                <div key={item.id} style={{ display: 'flex', gap: 15, background: 'white', padding: 15, borderRadius: 15, marginBottom: 10, border: '1px solid #eee', alignItems: 'center' }}>
-                                                    <div style={{ fontSize: 30 }}>{item.image}</div>
-                                                    <div style={{ flex: 1 }}><strong>{item.name}</strong><br/>${item.price} x {item.qty}</div>
-                                                    <button onClick={() => setCart(cart.filter(i => i.id !== item.id))} style={{ color: 'red', border: 'none', background: 'none' }}>Quitar</button>
+                            {/* VISTA: FAVORITOS */}
+                            {view === 'favs' && (
+                                <div>
+                                    <h1>Tu Wishlist ❤️</h1>
+                                    {favorites.length === 0 ? <p>No tenés productos guardados.</p> : (
+                                        <div className="product-grid">
+                                            {PRODUCTS_DATA.filter(p => favorites.includes(p.id)).map(p => (
+                                                <div key={p.id} className="product-card" onClick={() => setSelectedProduct(p)}>
+                                                    <div className="img-container">{p.image}</div>
+                                                    <div style={{padding: 20}}>
+                                                        <h3>{p.name}</h3>
+                                                        <button className="btn-primary" onClick={(e) => {e.stopPropagation(); addToCart(p)}}>Mover al carrito</button>
+                                                    </div>
                                                 </div>
                                             ))}
-                                            <div style={{ marginTop: 20, textAlign: 'right' }}>
-                                                <h3>Total: ${cart.reduce((s, i) => s + (i.price * i.qty), 0)}</h3>
-                                                <button onClick={handleCheckout} style={{ background: '#111', color: 'white', padding: '12px 30px', borderRadius: 12, border: 'none', fontWeight: 600 }}>Pagar Ahora</button>
-                                            </div>
-                                        </>
+                                        </div>
                                     )}
                                 </div>
                             )}
 
-                            {/* PEDIDOS */}
+                            {/* VISTA: CARRITO */}
+                            {view === 'cart' && (
+                                <div style={{maxWidth: 800, margin: '0 auto'}}>
+                                    <h1>Resumen de Compra</h1>
+                                    {cart.length === 0 ? <p>Nada por aquí todavía.</p> : (
+                                        <div style={{background: 'white', borderRadius: 24, padding: 32, border: '1px solid var(--border)'}}>
+                                            {cart.map(item => (
+                                                <div key={item.id} style={{display: 'flex', alignItems: 'center', padding: '16px 0', borderBottom: '1px solid #f1f5f9'}}>
+                                                    <div style={{fontSize: 40, marginRight: 20}}>{item.image}</div>
+                                                    <div style={{flex: 1}}>
+                                                        <div style={{fontWeight: 700}}>{item.name}</div>
+                                                        <div style={{color: '#64748b'}}>Cant: {item.qty}</div>
+                                                    </div>
+                                                    <div style={{fontWeight: 800}}>${item.price * item.qty}</div>
+                                                </div>
+                                            ))}
+                                            <div style={{marginTop: 32, textAlign: 'right'}}>
+                                                <div style={{fontSize: 24, fontWeight: 900, marginBottom: 24}}>Total: ${cart.reduce((acc, i) => acc + (i.price * i.qty), 0)}</div>
+                                                <button className="btn-primary" onClick={checkout} style={{padding: '16px 40px', width: 'auto'}}>Confirmar y Pagar</button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* VISTA: PEDIDOS */}
                             {view === 'orders' && (
-                                <div style={{ maxWidth: 600 }}>
-                                    <h2>Mis Pedidos</h2>
+                                <div>
+                                    <h1>Tus Compras</h1>
                                     {orders.map(o => (
-                                        <div key={o.id} style={{ background: 'white', padding: 20, borderRadius: 15, border: '1px solid #eee', marginBottom: 12 }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between' }}><strong>{o.id}</strong><span style={{ color: 'green' }}>{o.status}</span></div>
-                                            <p style={{ margin: '10px 0', fontSize: 14 }}>{o.product}</p>
-                                            <div style={{ textAlign: 'right', fontWeight: 700 }}>Total: ${o.amount}</div>
+                                        <div key={o.id} style={{background: 'white', padding: 24, borderRadius: 20, marginBottom: 16, border: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                                            <div>
+                                                <div style={{fontWeight: 800}}>{o.id}</div>
+                                                <div style={{fontSize: 13, color: '#64748b'}}>{o.date}</div>
+                                                <div style={{marginTop: 8, fontSize: 14}}>{o.items}</div>
+                                            </div>
+                                            <div style={{textAlign: 'right'}}>
+                                                <div style={{color: '#22c55e', fontWeight: 700}}>{o.status}</div>
+                                                <div style={{fontSize: 20, fontWeight: 900}}>${o.total}</div>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
                             )}
 
-                            {/* MENSAJES */}
-                            {view === 'messages' && (
-                                <div style={{ maxWidth: 600 }}>
-                                    <h2>Mensajes</h2>
-                                    {INITIAL_MESSAGES.map(m => (
-                                        <div key={m.id} style={{ display: 'flex', gap: 15, background: 'white', padding: 15, borderRadius: 15, marginBottom: 10, border: '1px solid #eee' }}>
-                                            <div style={{ fontSize: 25 }}>{m.avatar}</div>
-                                            <div><strong>{m.sender}</strong><p style={{ margin: 0, fontSize: 14 }}>{m.text}</p></div>
-                                        </div>
-                                    ))}
+                            {/* VISTA: CHAT */}
+                            {view === 'chat' && (
+                                <div style={{maxWidth: 600, margin: '0 auto', background: 'white', borderRadius: 24, border: '1px solid var(--border)', overflow: 'hidden'}}>
+                                    <div style={{padding: 20, background: '#111', color: 'white', fontWeight: 700}}>Soporte Nexo</div>
+                                    <div style={{height: 400, padding: 20, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12}}>
+                                        <div style={{background: '#f1f5f9', padding: 12, borderRadius: '12px 12px 12px 0', width: '80%'}}>¡Hola! 👋 ¿En qué podemos ayudarte con tu pedido?</div>
+                                        <div style={{background: '#3b82f6', color: 'white', padding: 12, borderRadius: '12px 12px 0 12px', alignSelf: 'flex-end', width: '80%'}}>Hola, quería consultar sobre el tiempo de entrega del iPhone.</div>
+                                    </div>
+                                    <div style={{padding: 20, borderTop: '1px solid #eee', display: 'flex', gap: 10}}>
+                                        <input type="text" placeholder="Escribe un mensaje..." style={{flex: 1, border: 'none', background: '#f8fafc', padding: 12, borderRadius: 10}} />
+                                        <button style={{background: '#111', color: 'white', border: 'none', padding: '0 20px', borderRadius: 10}}>Enviar</button>
+                                    </div>
                                 </div>
                             )}
                         </div>
                     </main>
 
-                    {/* MODAL DETALLES */}
+                    {/* MODAL DETALLES PRODUCTO */}
                     {selectedProduct && (
-                        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setSelectedProduct(null)}>
-                            <div style={{ background: 'white', padding: 32, borderRadius: 24, maxWidth: 500, width: '90%' }} onClick={e => e.stopPropagation()}>
-                                <div style={{ fontSize: 80, textAlign: 'center' }}>{selectedProduct.image}</div>
-                                <h2>{selectedProduct.name}</h2>
-                                <p style={{ color: '#666' }}>{selectedProduct.description}</p>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 24 }}>
-                                    <span style={{ fontSize: 24, fontWeight: 800 }}>${selectedProduct.price}</span>
-                                    <button 
-                                        onClick={() => { addToCart(selectedProduct); setSelectedProduct(null); }}
-                                        style={{ background: '#111', color: 'white', padding: '12px 24px', borderRadius: 12, border: 'none' }}
-                                    >
-                                        Añadir al carrito
-                                    </button>
+                        <div className="modal-overlay" onClick={() => setSelectedProduct(null)}>
+                            <div style={{background: 'white', width: '100%', maxWidth: 800, borderRadius: 32, overflow: 'hidden', display: 'flex'}} onClick={e => e.stopPropagation()}>
+                                <div style={{flex: 1, background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 120}}>{selectedProduct.image}</div>
+                                <div style={{flex: 1, padding: 40}}>
+                                    <div style={{display: 'flex', justifyContent: 'space-between'}}>
+                                        <span style={{color: 'var(--accent)', fontWeight: 700}}>{selectedProduct.category}</span>
+                                        <button onClick={() => toggleFav(selectedProduct.id)} style={{background: 'none', border: 'none', fontSize: 24}}>
+                                            {favorites.includes(selectedProduct.id) ? '❤️' : '🤍'}
+                                        </button>
+                                    </div>
+                                    <h2 style={{fontSize: 32, margin: '12px 0'}}>{selectedProduct.name}</h2>
+                                    <p style={{lineHeight: 1.6, color: '#64748b'}}>{selectedProduct.desc}</p>
+                                    <div style={{margin: '32px 0'}}>
+                                        <div style={{fontSize: 14, color: '#64748b'}}>Precio Final</div>
+                                        <div style={{fontSize: 40, fontWeight: 900}}>${selectedProduct.price}</div>
+                                    </div>
+                                    <button className="btn-primary" onClick={() => {addToCart(selectedProduct); setSelectedProduct(null)}}>Añadir al Carrito</button>
                                 </div>
                             </div>
                         </div>
