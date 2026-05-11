@@ -3,56 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexo Premium | Marketplace Completo</title>
+    <title>Nexo | OS Marketplace v2.4.1</title>
+    
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
     <style>
         :root {
-            --primary: #111827;
+            --color-background-primary: #ffffff;
+            --color-background-secondary: #f3f4f6;
+            --color-background-tertiary: #f9fafb;
+            --color-text-primary: #111827;
+            --color-text-secondary: #6b7280;
+            --color-border-tertiary: #e5e7eb;
             --accent: #3b82f6;
-            --bg: #f8fafc;
-            --card: #ffffff;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
-            --border: #e2e8f0;
         }
-        body { margin: 0; font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text-main); }
+
+        body { 
+            margin: 0; 
+            font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+            background: var(--color-background-tertiary); 
+            color: var(--color-text-primary);
+            overflow: hidden;
+        }
+
         * { box-sizing: border-box; transition: all 0.2s ease; }
-        
-        /* Layout */
-        .app-container { display: flex; height: 100vh; overflow: hidden; }
-        .sidebar { width: 260px; background: white; border-right: 1px solid var(--border); padding: 24px; display: flex; flexDirection: column; }
-        .main-content { flex: 1; overflow-y: auto; display: flex; flexDirection: column; }
-        
-        /* UI Elements */
-        .nav-item { 
-            display: flex; align-items: center; gap: 12px; padding: 12px 16px; 
-            border-radius: 12px; cursor: pointer; border: none; background: none;
-            width: 100%; text-align: left; font-size: 14px; font-weight: 500; color: var(--text-muted);
-        }
-        .nav-item:hover { background: #f1f5f9; color: var(--primary); }
-        .nav-item.active { background: var(--primary); color: white; }
 
-        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 24px; padding: 24px; }
-        .product-card { 
-            background: white; border-radius: 20px; border: 1px solid var(--border); 
-            overflow: hidden; position: relative; cursor: pointer;
-        }
-        .product-card:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
-        
-        .img-container { height: 200px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; fontSize: 64px; }
-        .badge { position: absolute; top: 12px; left: 12px; background: white; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        /* Scrollbar Personalizada */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
 
-        .price-tag { font-size: 20px; font-weight: 800; color: var(--primary); }
-        .btn-primary { 
-            background: var(--primary); color: white; padding: 12px; border-radius: 12px; 
-            border: none; font-weight: 600; width: 100%; cursor: pointer;
+        .sidebar-btn { 
+            display: flex; align-items: center; gap: 10px; padding: 10px 12px; 
+            border-radius: 10px; border: none; background: transparent; 
+            cursor: pointer; text-align: left; color: var(--color-text-secondary); 
+            font-weight: 400; fontSize: 14px; width: 100%;
         }
-        .btn-primary:hover { opacity: 0.9; transform: scale(1.02); }
+        .sidebar-btn.active { 
+            background: var(--color-background-secondary); 
+            color: var(--color-text-primary); 
+            font-weight: 500; 
+        }
+        .sidebar-btn:hover:not(.active) { background: #f9fafb; }
 
-        /* Notifications & Messages */
-        .dot { height: 8px; width: 8px; background: #ef4444; border-radius: 50%; display: inline-block; }
+        .product-card {
+            background: var(--color-background-primary);
+            border: 0.5px solid var(--color-border-tertiary);
+            border-radius: 16px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.06);
+        }
+
+        .stat-card {
+            background: var(--color-background-secondary);
+            border-radius: 12px;
+            padding: 18px 20px;
+        }
+
+        /* Animación de entrada */
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body>
@@ -61,127 +82,136 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // --- DATA ---
-        const PRODUCTS_DATA = [
-            { id: 1, name: "iPhone 15 Pro Max", price: 1299, category: "Mobile", image: "📱", stock: 10, badge: "Más Vendido", desc: "El titán de Apple con chip A17 Pro." },
-            { id: 2, name: "MacBook Air M3", price: 1599, category: "Laptops", image: "💻", stock: 5, badge: "Nuevo", desc: "Potencia sin ventiladores, silencio absoluto." },
-            { id: 3, name: "Sony WH-1000XM5", price: 399, category: "Audio", image: "🎧", stock: 15, badge: "Oferta", desc: "Cancelación de ruido líder en el mercado." },
-            { id: 4, name: "Apple Watch Ultra", price: 799, category: "Wearables", image: "⌚", stock: 8, badge: "Premium", desc: "El reloj más resistente jamás creado." },
-            { id: 5, name: "PlayStation 5", price: 499, category: "Gaming", image: "🎮", stock: 3, badge: "Limited", desc: "Juegos en 4K y 120fps constantes." },
-            { id: 6, name: "iPad Pro M2", price: 999, category: "Tablets", image: "平板", stock: 12, badge: "Pro", desc: "Tu próximo ordenador no es un ordenador." }
+        // --- CONSTANTES DE TU ARCHIVO JSX ---
+        const PRODUCTS = [
+            { id: 1, name: "iPhone 15 Pro Max", price: 1299, originalPrice: 1499, category: "Electrónica", rating: 4.8, reviews: 2341, image: "📱", seller: "TechStore Pro", stock: 15, badge: "Top Ventas", description: "El iPhone más avanzado con chip A17 Pro, cámara de 48MP y titanio premium.", tags: ["nuevo", "garantía"] },
+            { id: 2, name: "MacBook Air M3", price: 1099, originalPrice: 1299, category: "Computadoras", rating: 4.9, reviews: 876, image: "💻", seller: "AppleWorld", stock: 8, badge: "Nuevo", description: "Potencia increíble con batería de 18 horas.", tags: ["nuevo", "garantía"] },
+            { id: 3, name: "Sony WH-1000XM5", price: 279, originalPrice: 379, category: "Audio", rating: 4.7, reviews: 5432, image: "🎧", seller: "AudioTech", stock: 42, badge: "Oferta", description: "Cancelación de ruido líder en la industria.", tags: ["oferta"] },
+            { id: 4, name: "Samsung OLED 65\"", price: 1799, originalPrice: 2499, category: "TV & Video", rating: 4.6, reviews: 1203, image: "📺", seller: "ElectroHogar", stock: 5, badge: "Hot Deal", description: "Panel OLED 4K con 120Hz.", tags: ["oferta"] }
         ];
 
-        function App() {
-            // Persistencia: Cargamos datos de LocalStorage si existen
-            const [view, setView] = useState('home');
-            const [cart, setCart] = useState(() => JSON.parse(localStorage.getItem('cart')) || []);
-            const [orders, setOrders] = useState(() => JSON.parse(localStorage.getItem('orders')) || []);
-            const [favorites, setFavorites] = useState(() => JSON.parse(localStorage.getItem('favs')) || []);
-            const [search, setSearch] = useState('');
-            const [category, setCategory] = useState('All');
-            const [selectedProduct, setSelectedProduct] = useState(null);
+        const SELLER_STATS = [
+            { label: "Ventas del mes", value: "$48,290", trend: "+18%", up: true },
+            { label: "Pedidos activos", value: "127", trend: "+8", up: true },
+            { label: "Calificación", value: "4.9★", trend: "Excelente", up: true },
+            { label: "Visitas hoy", value: "3,421", trend: "+22%", up: true },
+        ];
 
-            // Guardar en LocalStorage cada vez que cambien los datos
-            useEffect(() => { localStorage.setItem('cart', JSON.stringify(cart)) }, [cart]);
-            useEffect(() => { localStorage.setItem('orders', JSON.stringify(orders)) }, [orders]);
-            useEffect(() => { localStorage.setItem('favs', JSON.stringify(favorites)) }, [favorites]);
+        const NOTIFICATIONS = [
+            { id: 1, type: "order", msg: "Tu pedido #ORD-8754 está en camino", time: "Hace 2h", icon: "🚚" },
+            { id: 2, type: "promo", msg: "¡20% off en toda la categoría Gaming!", time: "Hace 5h", icon: "🎯" }
+        ];
+
+        // --- COMPONENTES REUTILIZABLES ---
+        function Stars({ rating }) {
+            return (
+                <span style={{ color: "#f59e0b", fontSize: 12 }}>
+                    {"★".repeat(Math.floor(rating))}{"☆".repeat(5 - Math.floor(rating))}
+                    <span style={{ color: "var(--color-text-secondary)", marginLeft: 4 }}>{rating}</span>
+                </span>
+            );
+        }
+
+        function Badge({ text, type = "default" }) {
+            const styles = {
+                low: { bg: "#fee2e2", color: "#991b1b" },
+                new: { bg: "#dbeafe", color: "#1e40af" },
+                sale: { bg: "#d1fae5", color: "#065f46" },
+                default: { bg: "#f3f4f6", color: "#374151" }
+            };
+            const s = styles[type] || styles.default;
+            return <span style={{ background: s.bg, color: s.color, fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20 }}>{text}</span>;
+        }
+
+        // --- APP PRINCIPAL ---
+        function App() {
+            const [view, setView] = useState("home");
+            const [cart, setCart] = useState([]);
+            const [favorites, setFavorites] = useState([]);
+            const [selectedProduct, setSelectedProduct] = useState(null);
+            const [showNotif, setShowNotif] = useState(false);
+            const [search, setSearch] = useState("");
 
             const addToCart = (p) => {
-                const existing = cart.find(item => item.id === p.id);
-                if (existing) {
-                    setCart(cart.map(item => item.id === p.id ? {...item, qty: item.qty + 1} : item));
-                } else {
-                    setCart([...cart, {...p, qty: 1}]);
-                }
+                setCart(curr => {
+                    const exists = curr.find(i => i.id === p.id);
+                    if (exists) return curr.map(i => i.id === p.id ? {...i, qty: i.qty + 1} : i);
+                    return [...curr, {...p, qty: 1}];
+                });
             };
 
-            const toggleFav = (id) => {
-                setFavorites(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
-            };
-
-            const checkout = () => {
-                const total = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
-                const newOrder = {
-                    id: `#NX-${Math.floor(Math.random() * 90000) + 10000}`,
-                    date: new Date().toLocaleString(),
-                    items: cart.map(i => `${i.name} (x${i.qty})`).join(", "),
-                    total: total,
-                    status: "Confirmado"
-                };
-                setOrders([newOrder, ...orders]);
-                setCart([]);
-                setView('orders');
-                alert("🚀 ¡Pedido procesado! Gracias por elegir Nexo.");
-            };
-
-            const filteredProducts = PRODUCTS_DATA.filter(p => 
-                (category === 'All' || p.category === category) &&
-                (p.name.toLowerCase().includes(search.toLowerCase()))
-            );
+            const toggleFav = (id) => setFavorites(f => f.includes(id) ? f.filter(i => i !== id) : [...f, id]);
 
             return (
-                <div className="app-container">
-                    {/* SIDEBAR COMPLETO */}
-                    <aside className="sidebar">
-                        <div style={{fontSize: 24, fontWeight: 900, marginBottom: 40, letterSpacing: '-1px'}}>NEXO <span style={{color: 'var(--accent)'}}>•</span></div>
-                        
-                        <div style={{display: 'flex', flexDirection: 'column', gap: 4, flex: 1}}>
-                            <button className={`nav-item ${view === 'home' ? 'active' : ''}`} onClick={() => setView('home')}>🏠 Explorar</button>
-                            <button className={`nav-item ${view === 'favs' ? 'active' : ''}`} onClick={() => setView('favs')}>❤️ Favoritos ({favorites.length})</button>
-                            <button className={`nav-item ${view === 'cart' ? 'active' : ''}`} onClick={() => setView('cart')}>🛒 Carrito ({cart.reduce((a,b)=>a+b.qty, 0)})</button>
-                            <button className={`nav-item ${view === 'orders' ? 'active' : ''}`} onClick={() => setView('orders')}>📦 Mis Pedidos</button>
-                            <button className={`nav-item ${view === 'chat' ? 'active' : ''}`} onClick={() => setView('chat')}>💬 Mensajes <span className="dot"></span></button>
+                <div style={{ display: "flex", height: "100vh" }}>
+                    {/* SIDEBAR JSX STYLE */}
+                    <aside style={{ width: 240, background: "white", borderRight: "1px solid var(--color-border-tertiary)", padding: "24px 16px", display: "flex", flexDirection: "column" }}>
+                        <div style={{ padding: "0 12px 24px", borderBottom: "1px solid var(--color-border-tertiary)", marginBottom: 20 }}>
+                            <div style={{ fontSize: 22, fontWeight: 800, color: "var(--color-text-primary)" }}>◆ Nexo</div>
+                            <div style={{ fontSize: 11, color: "var(--color-text-secondary)" }}>v2.4.1 Premium</div>
                         </div>
 
-                        <div style={{marginTop: 'auto', padding: 16, background: '#f1f5f9', borderRadius: 16}}>
-                            <div style={{fontSize: 12, fontWeight: 700}}>Nexo Premium</div>
-                            <div style={{fontSize: 11, color: '#64748b'}}>Soporte 24/7 activo</div>
+                        <nav style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
+                            <button className={`sidebar-btn ${view === 'home' ? 'active' : ''}`} onClick={() => setView('home')}>🏪 Inicio</button>
+                            <button className={`sidebar-btn ${view === 'products' ? 'active' : ''}`} onClick={() => setView('products')}>📦 Productos</button>
+                            <button className={`sidebar-btn ${view === 'cart' ? 'active' : ''}`} onClick={() => setView('cart')}>🛒 Carrito ({cart.length})</button>
+                            <button className={`sidebar-btn ${view === 'seller' ? 'active' : ''}`} onClick={() => setView('seller')}>🏬 Panel Vendedor</button>
+                            <button className={`sidebar-btn ${view === 'messages' ? 'active' : ''}`} onClick={() => setView('messages')}>💬 Mensajes</button>
+                        </nav>
+
+                        <div style={{ borderTop: "1px solid var(--color-border-tertiary)", paddingTop: 20, display: "flex", alignItems: "center", gap: 12 }}>
+                            <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#111", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 600 }}>MA</div>
+                            <div>
+                                <div style={{ fontSize: 13, fontWeight: 600 }}>María A.</div>
+                                <div style={{ fontSize: 11, color: "var(--color-text-secondary)" }}>Comprador Pro</div>
+                            </div>
                         </div>
                     </aside>
 
-                    <main className="main-content">
-                        {/* NAVBAR SUPERIOR */}
-                        <header style={{padding: '20px 40px', background: 'white', display: 'flex', gap: 20, alignItems: 'center', borderBottom: '1px solid var(--border)', sticky: 'top'}}>
+                    {/* CONTENIDO PRINCIPAL */}
+                    <main style={{ flex: 1, overflowY: "auto", position: "relative" }}>
+                        <header style={{ sticky: "top", background: "white", padding: "12px 32px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--color-border-tertiary)", zIndex: 10 }}>
                             <input 
-                                type="text" placeholder="Busca tu próximo equipo..." 
-                                style={{flex: 1, padding: '12px 20px', borderRadius: 14, border: '1px solid var(--border)', background: '#f8fafc'}}
-                                onChange={(e) => setSearch(e.target.value)}
+                                type="text" placeholder="Buscar productos..." 
+                                value={search} onChange={(e) => setSearch(e.target.value)}
+                                style={{ width: 400, padding: "10px 16px", borderRadius: 10, border: "1px solid var(--color-border-tertiary)", background: "#f9fafb" }}
                             />
-                            <select 
-                                onChange={(e) => setCategory(e.target.value)}
-                                style={{padding: '12px', borderRadius: 14, border: '1px solid var(--border)', background: 'white'}}
-                            >
-                                <option value="All">Categorías</option>
-                                <option value="Mobile">Celulares</option>
-                                <option value="Laptops">Notebooks</option>
-                                <option value="Audio">Audio</option>
-                                <option value="Gaming">Consolas</option>
-                            </select>
-                            <div style={{width: 40, height: 40, borderRadius: 12, background: '#111', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700}}>JD</div>
+                            <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                                <button onClick={() => setShowNotif(!showNotif)} style={{ background: "#f3f4f6", border: "none", padding: "8px 12px", borderRadius: 8, cursor: "pointer", position: "relative" }}>
+                                    🔔 {NOTIFICATIONS.length > 0 && <span style={{ position: "absolute", top: 2, right: 2, width: 8, height: 8, background: "red", borderRadius: "50%" }}></span>}
+                                </button>
+                                <div style={{ fontSize: 12, color: "green" }}>● Sistema Online</div>
+                            </div>
                         </header>
 
-                        <div style={{padding: 40}}>
-                            {/* VISTA: TIENDA / EXPLORAR */}
-                            {view === 'home' && (
+                        <div className="fade-in" style={{ padding: 32 }}>
+                            
+                            {/* VISTA HOME */}
+                            {view === "home" && (
                                 <>
-                                    <h1 style={{margin: '0 0 8px', fontSize: 32}}>Para vos</h1>
-                                    <p style={{color: 'var(--text-muted)', marginBottom: 32}}>Basado en tus últimas búsquedas</p>
-                                    <div className="product-grid">
-                                        {filteredProducts.map(p => (
+                                    <div style={{ background: "linear-gradient(135deg, #111 0%, #333 100%)", borderRadius: 20, padding: 48, color: "white", marginBottom: 32 }}>
+                                        <h1 style={{ fontSize: 40, margin: 0, letterSpacing: "-1px" }}>Descubrí productos<br/>extraordinarios</h1>
+                                        <p style={{ opacity: 0.7, margin: "16px 0 24px" }}>Vendedores verificados y garantía total de Nexo.</p>
+                                        <button onClick={() => setView('products')} style={{ background: "white", color: "black", border: "none", padding: "12px 24px", borderRadius: 10, fontWeight: 600 }}>Explorar ahora →</button>
+                                    </div>
+
+                                    <h2 style={{ marginBottom: 20 }}>Más vendidos</h2>
+                                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 20 }}>
+                                        {PRODUCTS.map(p => (
                                             <div key={p.id} className="product-card" onClick={() => setSelectedProduct(p)}>
-                                                <div className="img-container">
+                                                <div style={{ height: 160, background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 60, position: "relative" }}>
                                                     {p.image}
-                                                    <div className="badge">{p.badge}</div>
+                                                    <button onClick={(e) => {e.stopPropagation(); toggleFav(p.id)}} style={{ position: "absolute", top: 10, right: 10, background: "white", border: "none", borderRadius: "50%", width: 30, height: 30 }}>
+                                                        {favorites.includes(p.id) ? "❤️" : "🤍"}
+                                                    </button>
                                                 </div>
-                                                <div style={{padding: 20}}>
-                                                    <div style={{fontSize: 12, color: 'var(--accent)', fontWeight: 700}}>{p.category}</div>
-                                                    <h3 style={{margin: '4px 0 12px', fontSize: 18}}>{p.name}</h3>
-                                                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                                                        <span className="price-tag">${p.price}</span>
-                                                        <button 
-                                                            onClick={(e) => {e.stopPropagation(); addToCart(p)}}
-                                                            style={{background: '#f1f5f9', border: 'none', padding: 8, borderRadius: 10}}
-                                                        >➕</button>
+                                                <div style={{ padding: 16 }}>
+                                                    <Badge text={p.badge} type={p.badge === 'Oferta' ? 'sale' : 'new'} />
+                                                    <h3 style={{ fontSize: 15, margin: "8px 0" }}>{p.name}</h3>
+                                                    <Stars rating={p.rating} />
+                                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 12 }}>
+                                                        <span style={{ fontWeight: 800, fontSize: 18 }}>${p.price}</span>
+                                                        <button onClick={(e) => {e.stopPropagation(); addToCart(p)}} style={{ background: "#111", color: "white", border: "none", padding: "6px 12px", borderRadius: 8 }}>+</button>
                                                     </div>
                                                 </div>
                                             </div>
@@ -190,107 +220,149 @@
                                 </>
                             )}
 
-                            {/* VISTA: FAVORITOS */}
-                            {view === 'favs' && (
+                            {/* PANEL VENDEDOR (TRAÍDO DE TU JSX) */}
+                            {view === "seller" && (
                                 <div>
-                                    <h1>Tu Wishlist ❤️</h1>
-                                    {favorites.length === 0 ? <p>No tenés productos guardados.</p> : (
-                                        <div className="product-grid">
-                                            {PRODUCTS_DATA.filter(p => favorites.includes(p.id)).map(p => (
-                                                <div key={p.id} className="product-card" onClick={() => setSelectedProduct(p)}>
-                                                    <div className="img-container">{p.image}</div>
-                                                    <div style={{padding: 20}}>
-                                                        <h3>{p.name}</h3>
-                                                        <button className="btn-primary" onClick={(e) => {e.stopPropagation(); addToCart(p)}}>Mover al carrito</button>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* VISTA: CARRITO */}
-                            {view === 'cart' && (
-                                <div style={{maxWidth: 800, margin: '0 auto'}}>
-                                    <h1>Resumen de Compra</h1>
-                                    {cart.length === 0 ? <p>Nada por aquí todavía.</p> : (
-                                        <div style={{background: 'white', borderRadius: 24, padding: 32, border: '1px solid var(--border)'}}>
-                                            {cart.map(item => (
-                                                <div key={item.id} style={{display: 'flex', alignItems: 'center', padding: '16px 0', borderBottom: '1px solid #f1f5f9'}}>
-                                                    <div style={{fontSize: 40, marginRight: 20}}>{item.image}</div>
-                                                    <div style={{flex: 1}}>
-                                                        <div style={{fontWeight: 700}}>{item.name}</div>
-                                                        <div style={{color: '#64748b'}}>Cant: {item.qty}</div>
-                                                    </div>
-                                                    <div style={{fontWeight: 800}}>${item.price * item.qty}</div>
-                                                </div>
-                                            ))}
-                                            <div style={{marginTop: 32, textAlign: 'right'}}>
-                                                <div style={{fontSize: 24, fontWeight: 900, marginBottom: 24}}>Total: ${cart.reduce((acc, i) => acc + (i.price * i.qty), 0)}</div>
-                                                <button className="btn-primary" onClick={checkout} style={{padding: '16px 40px', width: 'auto'}}>Confirmar y Pagar</button>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* VISTA: PEDIDOS */}
-                            {view === 'orders' && (
-                                <div>
-                                    <h1>Tus Compras</h1>
-                                    {orders.map(o => (
-                                        <div key={o.id} style={{background: 'white', padding: 24, borderRadius: 20, marginBottom: 16, border: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                                            <div>
-                                                <div style={{fontWeight: 800}}>{o.id}</div>
-                                                <div style={{fontSize: 13, color: '#64748b'}}>{o.date}</div>
-                                                <div style={{marginTop: 8, fontSize: 14}}>{o.items}</div>
-                                            </div>
-                                            <div style={{textAlign: 'right'}}>
-                                                <div style={{color: '#22c55e', fontWeight: 700}}>{o.status}</div>
-                                                <div style={{fontSize: 20, fontWeight: 900}}>${o.total}</div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-
-                            {/* VISTA: CHAT */}
-                            {view === 'chat' && (
-                                <div style={{maxWidth: 600, margin: '0 auto', background: 'white', borderRadius: 24, border: '1px solid var(--border)', overflow: 'hidden'}}>
-                                    <div style={{padding: 20, background: '#111', color: 'white', fontWeight: 700}}>Soporte Nexo</div>
-                                    <div style={{height: 400, padding: 20, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12}}>
-                                        <div style={{background: '#f1f5f9', padding: 12, borderRadius: '12px 12px 12px 0', width: '80%'}}>¡Hola! 👋 ¿En qué podemos ayudarte con tu pedido?</div>
-                                        <div style={{background: '#3b82f6', color: 'white', padding: 12, borderRadius: '12px 12px 0 12px', alignSelf: 'flex-end', width: '80%'}}>Hola, quería consultar sobre el tiempo de entrega del iPhone.</div>
+                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 32 }}>
+                                        <h2>Panel Vendedor <span style={{ fontSize: 14, color: "#666", fontWeight: 400 }}>/ TechStore Pro</span></h2>
+                                        <button style={{ background: "#111", color: "white", border: "none", padding: "10px 20px", borderRadius: 10 }}>+ Publicar Producto</button>
                                     </div>
-                                    <div style={{padding: 20, borderTop: '1px solid #eee', display: 'flex', gap: 10}}>
-                                        <input type="text" placeholder="Escribe un mensaje..." style={{flex: 1, border: 'none', background: '#f8fafc', padding: 12, borderRadius: 10}} />
-                                        <button style={{background: '#111', color: 'white', border: 'none', padding: '0 20px', borderRadius: 10}}>Enviar</button>
+                                    
+                                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 20, marginBottom: 40 }}>
+                                        {SELLER_STATS.map(s => (
+                                            <div key={s.label} className="stat-card">
+                                                <div style={{ fontSize: 12, color: "#666", textTransform: "uppercase", marginBottom: 8 }}>{s.label}</div>
+                                                <div style={{ fontSize: 24, fontWeight: 800 }}>{s.value}</div>
+                                                <div style={{ fontSize: 12, color: s.up ? "green" : "red", marginTop: 4 }}>{s.up ? "↑" : "↓"} {s.trend}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div style={{ background: "white", border: "1px solid var(--color-border-tertiary)", borderRadius: 16, padding: 24 }}>
+                                        <h3>Últimos Pedidos</h3>
+                                        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                                            <thead>
+                                                <tr style={{ textAlign: "left", color: "#666", fontSize: 13 }}>
+                                                    <th style={{ padding: "12px" }}>ID</th>
+                                                    <th>Comprador</th>
+                                                    <th>Producto</th>
+                                                    <th>Total</th>
+                                                    <th>Estado</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {[
+                                                    { id: "#9832", user: "Carlos M.", prod: "iPhone 15", total: "$1299", status: "Nuevo" },
+                                                    { id: "#9831", user: "Laura G.", prod: "MacBook Air", total: "$1099", status: "Enviado" }
+                                                ].map(o => (
+                                                    <tr key={o.id} style={{ borderTop: "1px solid #eee", fontSize: 14 }}>
+                                                        <td style={{ padding: "16px 12px", fontWeight: 600 }}>{o.id}</td>
+                                                        <td>{o.user}</td>
+                                                        <td>{o.prod}</td>
+                                                        <td style={{ fontWeight: 700 }}>{o.total}</td>
+                                                        <td><Badge text={o.status} type={o.status === "Nuevo" ? "new" : "sale"} /></td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* VISTA CARRITO */}
+                            {view === "cart" && (
+                                <div style={{ maxWidth: 800, margin: "0 auto" }}>
+                                    <h2>Tu Carrito</h2>
+                                    {cart.length === 0 ? (
+                                        <div style={{ textAlign: "center", padding: 60 }}>
+                                            <div style={{ fontSize: 60 }}>🛒</div>
+                                            <p>No hay productos todavía.</p>
+                                        </div>
+                                    ) : (
+                                        <div style={{ background: "white", borderRadius: 20, border: "1px solid var(--color-border-tertiary)", padding: 24 }}>
+                                            {cart.map(item => (
+                                                <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 20, padding: "16px 0", borderBottom: "1px solid #f3f4f6" }}>
+                                                    <div style={{ fontSize: 40 }}>{item.image}</div>
+                                                    <div style={{ flex: 1 }}>
+                                                        <div style={{ fontWeight: 600 }}>{item.name}</div>
+                                                        <div style={{ fontSize: 13, color: "#666" }}>x{item.qty}</div>
+                                                    </div>
+                                                    <div style={{ fontWeight: 800 }}>${item.price * item.qty}</div>
+                                                </div>
+                                            ))}
+                                            <div style={{ marginTop: 24, textAlign: "right" }}>
+                                                <div style={{ fontSize: 24, fontWeight: 900, marginBottom: 20 }}>Total: ${cart.reduce((a,b) => a + (b.price * b.qty), 0)}</div>
+                                                <button style={{ background: "#111", color: "white", padding: "14px 40px", borderRadius: 12, border: "none", fontWeight: 600 }}>Pagar Ahora</button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* VISTA MENSAJES (JSX STYLE) */}
+                            {view === "messages" && (
+                                <div style={{ display: "flex", height: "500px", background: "white", borderRadius: 16, border: "1px solid var(--color-border-tertiary)", overflow: "hidden" }}>
+                                    <div style={{ width: 250, borderRight: "1px solid #eee" }}>
+                                        <div style={{ padding: 20, fontWeight: 700, borderBottom: "1px solid #eee" }}>Chats</div>
+                                        {[{name: "TechStore Pro", msg: "Tu pedido salió!"}, {name: "SportZone", msg: "¿Qué talle buscás?"}].map(c => (
+                                            <div key={c.name} style={{ padding: 15, borderBottom: "1px solid #f9f9f9", cursor: "pointer" }}>
+                                                <div style={{ fontSize: 14, fontWeight: 600 }}>{c.name}</div>
+                                                <div style={{ fontSize: 12, color: "#666" }}>{c.msg}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                                        <div style={{ flex: 1, padding: 20, background: "#f9fafb" }}>
+                                            <div style={{ background: "white", padding: 12, borderRadius: 12, maxWidth: "70%", fontSize: 14 }}>Hola! Tu pedido ya fue enviado hoy a las 14:30hs. ✓</div>
+                                        </div>
+                                        <div style={{ padding: 15, borderTop: "1px solid #eee", display: "flex", gap: 10 }}>
+                                            <input style={{ flex: 1, border: "none", background: "#f3f4f6", padding: 10, borderRadius: 8 }} placeholder="Escribe un mensaje..."/>
+                                            <button style={{ background: "#111", color: "white", border: "none", padding: "0 15px", borderRadius: 8 }}>→</button>
+                                        </div>
                                     </div>
                                 </div>
                             )}
                         </div>
                     </main>
 
-                    {/* MODAL DETALLES PRODUCTO */}
+                    {/* PANEL DE NOTIFICACIONES LATERAL */}
+                    {showNotif && (
+                        <div className="fade-in" style={{ position: "fixed", top: 0, right: 0, width: 320, height: "100vh", background: "white", borderLeft: "1px solid var(--color-border-tertiary)", zIndex: 100, padding: 24 }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+                                <h3 style={{ margin: 0 }}>Notificaciones</h3>
+                                <button onClick={() => setShowNotif(false)} style={{ border: "none", background: "none", fontSize: 20 }}>×</button>
+                            </div>
+                            {NOTIFICATIONS.map(n => (
+                                <div key={n.id} style={{ padding: 16, background: "#f8fafc", borderRadius: 12, marginBottom: 12, display: "flex", gap: 12 }}>
+                                    <span style={{ fontSize: 20 }}>{n.icon}</span>
+                                    <div>
+                                        <div style={{ fontSize: 13, fontWeight: 500 }}>{n.msg}</div>
+                                        <div style={{ fontSize: 11, color: "#666" }}>{n.time}</div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* MODAL DE PRODUCTO */}
                     {selectedProduct && (
-                        <div className="modal-overlay" onClick={() => setSelectedProduct(null)}>
-                            <div style={{background: 'white', width: '100%', maxWidth: 800, borderRadius: 32, overflow: 'hidden', display: 'flex'}} onClick={e => e.stopPropagation()}>
-                                <div style={{flex: 1, background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 120}}>{selectedProduct.image}</div>
-                                <div style={{flex: 1, padding: 40}}>
-                                    <div style={{display: 'flex', justifyContent: 'space-between'}}>
-                                        <span style={{color: 'var(--accent)', fontWeight: 700}}>{selectedProduct.category}</span>
-                                        <button onClick={() => toggleFav(selectedProduct.id)} style={{background: 'none', border: 'none', fontSize: 24}}>
-                                            {favorites.includes(selectedProduct.id) ? '❤️' : '🤍'}
-                                        </button>
+                        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setSelectedProduct(null)}>
+                            <div style={{ background: "white", width: 700, borderRadius: 24, overflow: "hidden", display: "flex" }} onClick={e => e.stopPropagation()}>
+                                <div style={{ flex: 1, background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 100 }}>{selectedProduct.image}</div>
+                                <div style={{ flex: 1, padding: 40 }}>
+                                    <div style={{ fontSize: 12, color: "var(--accent)", fontWeight: 700 }}>{selectedProduct.category}</div>
+                                    <h2 style={{ margin: "10px 0" }}>{selectedProduct.name}</h2>
+                                    <p style={{ color: "#666", fontSize: 14, lineHeight: 1.6 }}>{selectedProduct.description}</p>
+                                    <div style={{ margin: "24px 0" }}>
+                                        <div style={{ fontSize: 32, fontWeight: 800 }}>${selectedProduct.price}</div>
+                                        <div style={{ textDecoration: "line-through", color: "#999" }}>${selectedProduct.originalPrice}</div>
                                     </div>
-                                    <h2 style={{fontSize: 32, margin: '12px 0'}}>{selectedProduct.name}</h2>
-                                    <p style={{lineHeight: 1.6, color: '#64748b'}}>{selectedProduct.desc}</p>
-                                    <div style={{margin: '32px 0'}}>
-                                        <div style={{fontSize: 14, color: '#64748b'}}>Precio Final</div>
-                                        <div style={{fontSize: 40, fontWeight: 900}}>${selectedProduct.price}</div>
-                                    </div>
-                                    <button className="btn-primary" onClick={() => {addToCart(selectedProduct); setSelectedProduct(null)}}>Añadir al Carrito</button>
+                                    <button 
+                                        onClick={() => {addToCart(selectedProduct); setSelectedProduct(null)}}
+                                        style={{ width: "100%", background: "#111", color: "white", border: "none", padding: "16px", borderRadius: 12, fontWeight: 600 }}
+                                    >
+                                        Agregar al carrito
+                                    </button>
                                 </div>
                             </div>
                         </div>
